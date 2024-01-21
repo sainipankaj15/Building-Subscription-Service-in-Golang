@@ -6,7 +6,9 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/alexedwards/scs/redisstore"
@@ -43,6 +45,9 @@ func main() {
 	}
 
 	// When user takes a subscirption , sends emails : Will use gorutine probabaly for this
+
+	// Listening for interput signal from Operating system
+	go app.ListenForShutDown()
 
 	// listeing for web connections
 	app.serve()
@@ -96,4 +101,14 @@ func initRedis() *redis.Pool {
 		},
 	}
 	return redisPool
+}
+
+func (app *Config) ListenForShutDown() {
+
+	quit := make(chan os.Signal, 1)
+
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	app.ShutDown()
+	os.Exit(0) // Zero code shows with succesfully exit
 }

@@ -37,7 +37,6 @@ func ConnectToDB() *sql.DB {
 	}
 }
 
-
 // Connecting to DB
 func openDB(dsn string) (*sql.DB, error) {
 
@@ -53,4 +52,15 @@ func openDB(dsn string) (*sql.DB, error) {
 	}
 
 	return db , nil
+}
+
+
+func (app *Config) ShutDown(){
+	// Perform will cleanup task there
+	app.InfoLog.Println("Cleanup tasks is going on....")
+	
+	// Block until our waitgroup is empty
+	app.WaitGroup.Wait()
+	
+	app.InfoLog.Println("Closing channel and shutting dowm application....")
 }
