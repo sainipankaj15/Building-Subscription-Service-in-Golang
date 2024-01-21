@@ -27,10 +27,10 @@ func (app *Config) render(w http.ResponseWriter, r *http.Request, t string, td *
 	// These are the templates which are necessary with Any upcoming template
 	partials := []string{
 		fmt.Sprintf("%s/base.layout.gohtml", pathToTemplates),
-		fmt.Sprintf("%s/header.layout.gohtml", pathToTemplates),
-		fmt.Sprintf("%s/navbar.layout.gohtml", pathToTemplates),
-		fmt.Sprintf("%s/footer.layout.gohtml", pathToTemplates),
-		fmt.Sprintf("%s/alerts.layout.gohtml", pathToTemplates),
+		fmt.Sprintf("%s/header.partial.gohtml", pathToTemplates),
+		fmt.Sprintf("%s/navbar.partial.gohtml", pathToTemplates),
+		fmt.Sprintf("%s/footer.partial.gohtml", pathToTemplates),
+		fmt.Sprintf("%s/alerts.partial.gohtml", pathToTemplates),
 	}
 
 	// This template which I want to render
