@@ -1,6 +1,7 @@
 package main
 
 import (
+	"building-subscritpion-service/data"
 	"database/sql"
 	"log"
 	"sync"
@@ -14,4 +15,5 @@ type Config struct {
 	InfoLog   *log.Logger
 	ErrorLog  *log.Logger
 	WaitGroup *sync.WaitGroup
+	Models    data.Models
 }

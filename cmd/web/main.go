@@ -1,6 +1,7 @@
 package main
 
 import (
+	"building-subscritpion-service/data"
 	"database/sql"
 	"fmt"
 	"log"
@@ -42,6 +43,7 @@ func main() {
 		InfoLog:   infoLog,
 		ErrorLog:  errorLog,
 		WaitGroup: &wg,
+		Models:    data.New(db),
 	}
 
 	// When user takes a subscirption , sends emails : Will use gorutine probabaly for this
