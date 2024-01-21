@@ -86,7 +86,6 @@ func initSession() *scs.SessionManager {
 	session.Cookie.Secure = true
 
 	return session
-
 }
 
 func initRedis() *redis.Pool {
