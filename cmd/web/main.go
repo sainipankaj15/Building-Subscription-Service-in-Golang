@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -13,7 +14,7 @@ import (
 	"github.com/gomodule/redigo/redis"
 )
 
-const webPort = ":80"
+const webPort = "8080"
 
 func main() {
 
@@ -24,7 +25,7 @@ func main() {
 	session := initSession()
 
 	// Creating logger
-	infoLog  := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
+	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
 	errorLog := log.New(os.Stdout, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 
 	// creating channels
@@ -44,7 +45,24 @@ func main() {
 	// When user takes a subscirption , sends emails : Will use gorutine probabaly for this
 
 	// listeing for web connections
+	app.serve()
+}
 
+func (app *Config) serve() {
+
+	// Start http server
+	srv := &http.Server{
+		Addr:    fmt.Sprintf(":%s", webPort),
+		Handler: app.routes(),
+	}
+
+	app.InfoLog.Println("Starting Web Server ......")
+
+	err := srv.ListenAndServe()
+
+	if err != nil {
+		log.Panic(err)
+	}
 }
 
 func intiDB() *sql.DB {
