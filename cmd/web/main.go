@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/alexedwards/scs/redisstore"
@@ -14,24 +15,35 @@ import (
 
 const webPort = ":80"
 
-func main(){
+func main() {
 
 	// connecting database
 	db := intiDB()
-	db.Ping()
- 
-	// Creating session 
+
+	// Creating session
 	session := initSession()
+
+	// Creating logger
+	infoLog  := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
+	errorLog := log.New(os.Stdout, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 
 	// creating channels
 
-	// creating waitgroup 
+	// creating waitgroup
+	wg := sync.WaitGroup{}
 
-	// setp the application config
-	
-	// When user takes a subscirption , sends emails : Will use gorutine probabaly for this 
+	// setup the application config
+	app := Config{
+		Session:   session,
+		DB:        db,
+		InfoLog:   infoLog,
+		ErrorLog:  errorLog,
+		WaitGroup: &wg,
+	}
 
-	// listeing for web connections 
+	// When user takes a subscirption , sends emails : Will use gorutine probabaly for this
+
+	// listeing for web connections
 
 }
 
@@ -45,12 +57,12 @@ func intiDB() *sql.DB {
 	return conn
 }
 
-func initSession() *scs.SessionManager{
-	
+func initSession() *scs.SessionManager {
+
 	session := scs.New()
 
 	session.Store = redisstore.New(initRedis())
-	session.Lifetime = 24*time.Hour
+	session.Lifetime = 24 * time.Hour
 	session.Cookie.Persist = true
 	session.Cookie.SameSite = http.SameSiteLaxMode
 	session.Cookie.Secure = true
@@ -59,10 +71,10 @@ func initSession() *scs.SessionManager{
 
 }
 
-func initRedis() *redis.Pool{
+func initRedis() *redis.Pool {
 	redisPool := &redis.Pool{
 		MaxIdle: 10,
-		Dial: func() (redis.Conn, error)  {
+		Dial: func() (redis.Conn, error) {
 			return redis.Dial("tcp", os.Getenv("REDIS"))
 		},
 	}
