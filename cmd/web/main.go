@@ -3,6 +3,7 @@ package main
 import (
 	"building-subscritpion-service/data"
 	"database/sql"
+	"encoding/gob"
 	"fmt"
 	"log"
 	"net/http"
@@ -83,6 +84,8 @@ func intiDB() *sql.DB {
 }
 
 func initSession() *scs.SessionManager {
+
+	gob.Register(data.User{})
 
 	session := scs.New()
 
