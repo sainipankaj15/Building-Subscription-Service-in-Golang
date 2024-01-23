@@ -34,7 +34,6 @@ func (app *Config) PostLoginPage(w http.ResponseWriter, r *http.Request) {
 
 	// if code is there it means user is in our database : Now will verify for password
 	validPassword , err := user.PasswordMatches(password)
-
 	if err != nil {
 		app.Session.Put(r.Context(), "error", "Invalid Credentials")
 		http.Redirect(w,r,"/login",http.StatusSeeOther)
@@ -42,6 +41,13 @@ func (app *Config) PostLoginPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !validPassword {
+		msg := Message{
+			To: email,
+			Subject: "Failed log in attempt",
+			Data:"Invalid Login Attempt",
+		}
+		app.sendEmail(msg)
+		 
 		app.Session.Put(r.Context(), "error", "Invalid Credentials")
 		http.Redirect(w,r,"/login",http.StatusSeeOther)
 		return 

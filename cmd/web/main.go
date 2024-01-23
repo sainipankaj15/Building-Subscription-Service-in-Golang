@@ -47,7 +47,11 @@ func main() {
 		Models:    data.New(db),
 	}
 
-	// When user takes a subscirption , sends emails : Will use gorutine probabaly for this
+	// Set up for mail 
+	app.Mailer = app.createMail()
+
+	// When user takes a subscirption , sends emails : Will use gorutine for this : Background Contiounsly
+	go app.listenForMail()
 
 	// Listening for interput signal from Operating system
 	go app.ListenForShutDown()
@@ -116,4 +120,27 @@ func (app *Config) ListenForShutDown() {
 	<-quit
 	app.ShutDown()
 	os.Exit(0) // Zero code shows with succesfully exit
+}
+
+func (app *Config) createMail() Mail {
+
+	// Will create Channels
+	errorChan := make(chan error)
+	mailerChan := make(chan Message, 101)
+	doneChan := make(chan bool)
+
+	m := Mail{
+		Domain:      "localhost",
+		Host:        "localhost",
+		Port:        1025,
+		Encryption:  "none",
+		FromAddress: "info@mycompany.com",
+		FromName:    "info",
+		WaitGroup:   app.WaitGroup,
+		ErrorChan:   errorChan,
+		MailerChan:  mailerChan,
+		DoneChan:    doneChan,
+	} 
+
+	return m 
 }

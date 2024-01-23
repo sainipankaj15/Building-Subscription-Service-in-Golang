@@ -38,7 +38,25 @@ type Message struct {
 }
 
 // A function who is listener on the MailerChan
+
+func (app *Config) listenForMail(){
+	
+	for{
+		select {
+		case msg := <- app.Mailer.MailerChan:
+			go app.Mailer.sendMail(msg, app.Mailer.ErrorChan)
+		case err := <- app.Mailer.ErrorChan:
+			app.ErrorLog.Println(err) //You can handle accordingly
+		case <- app.Mailer.DoneChan:
+			return
+		}
+	}
+
+}
+
 func (m *Mail) sendMail(msg Message, errorChan chan error) {
+
+	defer m.WaitGroup.Done()
 
 	if msg.Template == "" {
 		msg.Template = "mail"
