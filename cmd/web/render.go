@@ -1,9 +1,10 @@
 package main
 
 import (
+	"building-subscritpion-service/data"
 	"fmt"
-	"net/http"
 	"html/template"
+	"net/http"
 	"time"
 )
 
@@ -19,7 +20,7 @@ type TemplateData struct {
 	Error         string
 	Authenticated bool
 	Now           time.Time
-	// User          *data.User
+	User          *data.User
 }
 
 func (app *Config) render(w http.ResponseWriter, r *http.Request, t string, td *TemplateData) {
@@ -36,7 +37,6 @@ func (app *Config) render(w http.ResponseWriter, r *http.Request, t string, td *
 	// This template which I want to render
 	var templateSlice []string
 	templateSlice = append(templateSlice, fmt.Sprintf("%s/%s", pathToTemplates, t))
-
 
 	templateSlice = append(templateSlice, partials...)
 	/* Simple explaintion of above line
@@ -74,6 +74,14 @@ func (app *Config) AddDefaultData(td *TemplateData, r *http.Request) *TemplateDa
 	if app.IsAuthenticated(r) {
 		td.Authenticated = true
 		// TODO - get more user information later
+		user, ok := app.Session.Get(r.Context(), "user").(data.User)
+
+		if !ok {
+			app.ErrorLog.Println("Can not get user from session")
+		}else{
+			td.User = &user
+		}
+
 	}
 	td.Now = time.Now()
 

@@ -39,15 +39,15 @@ type Message struct {
 
 // A function who is listener on the MailerChan
 
-func (app *Config) listenForMail(){
-	
-	for{
+func (app *Config) listenForMail() {
+
+	for {
 		select {
-		case msg := <- app.Mailer.MailerChan:
+		case msg := <-app.Mailer.MailerChan:
 			go app.Mailer.sendMail(msg, app.Mailer.ErrorChan)
-		case err := <- app.Mailer.ErrorChan:
+		case err := <-app.Mailer.ErrorChan:
 			app.ErrorLog.Println(err) //You can handle accordingly
-		case <- app.Mailer.DoneChan:
+		case <-app.Mailer.DoneChan:
 			return
 		}
 	}
@@ -124,7 +124,7 @@ func (m *Mail) sendMail(msg Message, errorChan chan error) {
 
 func (m *Mail) bulidHTMLMessage(msg Message) (string, error) {
 
-	templateToRender := fmt.Sprintf("./cmd/web/templates/%s.html.gohtml",msg.Template)
+	templateToRender := fmt.Sprintf("./cmd/web/templates/%s.html.gohtml", msg.Template)
 
 	t, err := template.New("email-html").ParseFiles(templateToRender)
 	if err != nil {
@@ -148,7 +148,7 @@ func (m *Mail) bulidHTMLMessage(msg Message) (string, error) {
 
 func (m *Mail) bulidPlainTextMessage(msg Message) (string, error) {
 
-	templateToRender := fmt.Sprintf("./cmd/web/templates/%s.plain.gohtml",msg.Template)
+	templateToRender := fmt.Sprintf("./cmd/web/templates/%s.plain.gohtml", msg.Template)
 
 	t, err := template.New("email-plain").ParseFiles(templateToRender)
 	if err != nil {

@@ -47,7 +47,7 @@ func main() {
 		Models:    data.New(db),
 	}
 
-	// Set up for mail 
+	// Set up for mail
 	app.Mailer = app.createMail()
 
 	// When user takes a subscirption , sends emails : Will use gorutine for this : Background Contiounsly
@@ -140,7 +140,7 @@ func (app *Config) createMail() Mail {
 		ErrorChan:   errorChan,
 		MailerChan:  mailerChan,
 		DoneChan:    doneChan,
-	} 
+	}
 
-	return m 
+	return m
 }

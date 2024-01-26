@@ -134,13 +134,13 @@ func (app *Config) PostRegisterPage(w http.ResponseWriter, r *http.Request) {
 
 func (app *Config) ActivateAccount(w http.ResponseWriter, r *http.Request) {
 
-	// validate URL 
+	// validate URL
 	url := r.RequestURI
 
 	app.InfoLog.Println(url)
-	
+
 	testurl := fmt.Sprintf("http://localhost:8080%s", url)
-	
+
 	app.InfoLog.Println(testurl)
 
 	okay := VerifyToken(testurl)
@@ -148,31 +148,54 @@ func (app *Config) ActivateAccount(w http.ResponseWriter, r *http.Request) {
 	if !okay {
 		app.Session.Put(r.Context(), "error", "Invalid token")
 		http.Redirect(w, r, "/", http.StatusSeeOther)
-		return 
+		return
 	}
 
-	// Till now , URL is validated : Will activate the account 
-	user , err := app.Models.User.GetByEmail(r.URL.Query().Get("email"))
+	// Till now , URL is validated : Will activate the account
+	user, err := app.Models.User.GetByEmail(r.URL.Query().Get("email"))
 
-	if err!= nil {
+	if err != nil {
 		app.Session.Put(r.Context(), "error", "No user found")
 		http.Redirect(w, r, "/", http.StatusSeeOther)
-		return 
+		return
 	}
-	
-	// Became user active 
-	user.Active = 1 
+
+	// Became user active
+	user.Active = 1
 
 	// Updating the user in database as well
 	err = user.Update()
-	if err!= nil {
+	if err != nil {
 		app.Session.Put(r.Context(), "error", "Unable to update the user")
 		http.Redirect(w, r, "/", http.StatusSeeOther)
-		return 
+		return
 	}
 
 	app.Session.Put(r.Context(), "flash", "Account activated, You can login now")
 	http.Redirect(w, r, "/login ", http.StatusSeeOther)
+}
 
+func (app *Config) ChooseSubscription(w http.ResponseWriter, r *http.Request) {
 
+	// if user didn't register till now, so we will not show this page to him
+	if !app.Session.Exists(r.Context(), "userID") {
+		app.Session.Put(r.Context(), "warning", "You have to login to see this Page")
+		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+		return
+	}
+
+	plans, err := app.Models.Plan.GetAll()
+	if err != nil {
+		app.Session.Put(r.Context(), "error", "Unable to find the plans")
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		app.ErrorLog.Println(err)
+		return
+	}
+
+	dataMap := make(map[string]any)
+	dataMap["plans"] = plans
+
+	app.render(w, r, "plans.page.gohtml", &TemplateData{
+		Data: dataMap,
+	})
 }
