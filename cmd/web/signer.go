@@ -42,6 +42,7 @@ func VerifyToken(token string) bool {
 	if err != nil {
 		// signature is not valid. Token was tampered with, forged, or maybe it's
 		// not even a token at all! Either way, it's not safe to use it.
+		fmt.Println("This is not from our database, Something is wrong")
 		return false
 	}
 	// valid hash

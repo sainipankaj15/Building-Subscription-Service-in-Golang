@@ -113,7 +113,7 @@ func (app *Config) PostRegisterPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Sending an activation Email
-	url := fmt.Sprintf("http://localhost/activation?email=%s", user.Email)
+	url := fmt.Sprintf("http://localhost:8080/activate?email=%s", user.Email)
 
 	// This is our url but now we will use only Signed URL to avoid hackign and tempering the URL : Signer.go
 	signedURL := GenerateTokenFromString(url)
@@ -130,9 +130,49 @@ func (app *Config) PostRegisterPage(w http.ResponseWriter, r *http.Request) {
 	app.Session.Put(r.Context(), "flash", "Confirmation Mail Sent from Our backend, Please check your Mail")
 
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
-
 }
 
 func (app *Config) ActivateAccount(w http.ResponseWriter, r *http.Request) {
+
+	// validate URL 
+	url := r.RequestURI
+
+	app.InfoLog.Println(url)
+	
+	testurl := fmt.Sprintf("http://localhost:8080%s", url)
+	
+	app.InfoLog.Println(testurl)
+
+	okay := VerifyToken(testurl)
+
+	if !okay {
+		app.Session.Put(r.Context(), "error", "Invalid token")
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return 
+	}
+
+	// Till now , URL is validated : Will activate the account 
+	user , err := app.Models.User.GetByEmail(r.URL.Query().Get("email"))
+
+	if err!= nil {
+		app.Session.Put(r.Context(), "error", "No user found")
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return 
+	}
+	
+	// Became user active 
+	user.Active = 1 
+
+	// Updating the user in database as well
+	err = user.Update()
+	if err!= nil {
+		app.Session.Put(r.Context(), "error", "Unable to update the user")
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return 
+	}
+
+	app.Session.Put(r.Context(), "flash", "Account activated, You can login now")
+	http.Redirect(w, r, "/login ", http.StatusSeeOther)
+
 
 }
