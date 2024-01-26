@@ -7,6 +7,7 @@ require (
 	github.com/alexedwards/scs/redisstore v0.0.0-20231113091146-cef4b05350c8 // indirect
 	github.com/alexedwards/scs/v2 v2.7.0 // indirect
 	github.com/andybalholm/cascadia v1.1.0 // indirect
+	github.com/bwmarrin/go-alone v0.0.0-20190806015146-742bb55d1631 // indirect
 	github.com/go-chi/chi/v5 v5.0.11 // indirect
 	github.com/gomodule/redigo v1.8.0 // indirect
 	github.com/gorilla/css v1.0.0 // indirect
@@ -24,5 +25,6 @@ require (
 	github.com/xhit/go-simple-mail/v2 v2.16.0 // indirect
 	golang.org/x/crypto v0.6.0 // indirect
 	golang.org/x/net v0.6.0 // indirect
+	golang.org/x/sys v0.5.0 // indirect
 	golang.org/x/text v0.7.0 // indirect
 )
