@@ -8,9 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"os/signal"
 	"sync"
-	"syscall"
 	"time"
 
 	"github.com/alexedwards/scs/redisstore"
@@ -39,12 +37,14 @@ func main() {
 
 	// setup the application config
 	app := Config{
-		Session:   session,
-		DB:        db,
-		InfoLog:   infoLog,
-		ErrorLog:  errorLog,
-		WaitGroup: &wg,
-		Models:    data.New(db),
+		Session:       session,
+		DB:            db,
+		InfoLog:       infoLog,
+		ErrorLog:      errorLog,
+		WaitGroup:     &wg,
+		Models:        data.New(db),
+		ErrorChan:     make(chan error),
+		ErrorChanDone: make(chan bool),
 	}
 
 	// Set up for mail
@@ -55,6 +55,9 @@ func main() {
 
 	// Listening for interput signal from Operating system
 	go app.ListenForShutDown()
+
+	// Listening for errors
+	go app.ListenForErrors()
 
 	// listeing for web connections
 	app.serve()
@@ -110,16 +113,6 @@ func initRedis() *redis.Pool {
 		},
 	}
 	return redisPool
-}
-
-func (app *Config) ListenForShutDown() {
-
-	quit := make(chan os.Signal, 1)
-
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
-	app.ShutDown()
-	os.Exit(0) // Zero code shows with succesfully exit
 }
 
 func (app *Config) createMail() Mail {

@@ -24,7 +24,24 @@ func (app *Config) routes() http.Handler {
 	mux.Get("/register", app.RegisterPage)
 	mux.Post("/register", app.PostRegisterPage)
 	mux.Get("/activate", app.ActivateAccount)
-	mux.Get("/plans", app.ChooseSubscription)
+
+	mux.Mount("/members", app.authRouter())
 
 	return mux
 }
+
+func (app *Config) authRouter() http.Handler {
+
+	// Create router
+	mux := chi.NewRouter()
+
+	// set up Middleware
+	mux.Use(app.Auth)
+ 
+	// define applicaiton routes
+	mux.Get("/plans", app.ChooseSubscription)
+	mux.Get("/subscribe", app.SubscribeToPlan)
+
+	return mux
+}
+

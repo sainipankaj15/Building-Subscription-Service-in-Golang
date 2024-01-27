@@ -4,7 +4,10 @@ import (
 	"database/sql"
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
+
 	_ "github.com/jackc/pgconn"
 	_ "github.com/jackc/pgx/v4"
 	_ "github.com/jackc/pgx/v4/stdlib"
@@ -21,7 +24,7 @@ func ConnectToDB() *sql.DB {
 
 		if err != nil {
 			log.Println("Postgresql database is not connecteed")
-		}else{
+		} else {
 			log.Println("Postgresql database is connected")
 			return connection
 		}
@@ -31,8 +34,8 @@ func ConnectToDB() *sql.DB {
 		}
 
 		log.Println("Backing off for 1 second")
-		time.Sleep( 1 * time.Second)
-		countAttempts ++
+		time.Sleep(1 * time.Second)
+		countAttempts++
 		continue
 	}
 }
@@ -51,22 +54,47 @@ func openDB(dsn string) (*sql.DB, error) {
 		return nil, err
 	}
 
-	return db , nil
+	return db, nil
 }
 
-
-func (app *Config) ShutDown(){
+func (app *Config) ShutDown() {
 	// Perform will cleanup task there
 	app.InfoLog.Println("Cleanup tasks is going on....")
-	
+
 	// Block until our waitgroup is empty
 	app.WaitGroup.Wait()
 
 	// Sending the Mailer's Done channel to true
 	app.Mailer.DoneChan <- true
-	
+
+	// Sending the Error's Done channel to true
+	app.ErrorChanDone <- true
+
 	app.InfoLog.Println("Closing channel and shutting dowm application....")
 	close(app.Mailer.MailerChan)
 	close(app.Mailer.ErrorChan)
 	close(app.Mailer.DoneChan)
+	close(app.ErrorChan)
+	close(app.ErrorChanDone)
+}
+
+func (app *Config) ListenForErrors() {
+	for {
+		select {
+		case err := <-app.ErrorChan:
+			app.ErrorLog.Println(err)
+		case <-app.ErrorChanDone:
+			return
+		}
+	}
+}
+
+func (app *Config) ListenForShutDown() {
+
+	quit := make(chan os.Signal, 1)
+
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	app.ShutDown()
+	os.Exit(0) // Zero code shows with succesfully exit
 }

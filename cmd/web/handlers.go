@@ -5,6 +5,11 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"strconv"
+	"time"
+
+	"github.com/phpdave11/gofpdf"
+	"github.com/phpdave11/gofpdf/contrib/gofpdi"
 )
 
 func (app *Config) HomePage(w http.ResponseWriter, r *http.Request) {
@@ -66,7 +71,6 @@ func (app *Config) PostLoginPage(w http.ResponseWriter, r *http.Request) {
 
 	//Redirect to home page
 	http.Redirect(w, r, "/", http.StatusSeeOther)
-
 }
 
 func (app *Config) Logout(w http.ResponseWriter, r *http.Request) {
@@ -177,17 +181,13 @@ func (app *Config) ActivateAccount(w http.ResponseWriter, r *http.Request) {
 
 func (app *Config) ChooseSubscription(w http.ResponseWriter, r *http.Request) {
 
-	// if user didn't register till now, so we will not show this page to him
-	if !app.Session.Exists(r.Context(), "userID") {
-		app.Session.Put(r.Context(), "warning", "You have to login to see this Page")
-		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
-		return
-	}
+	// We have already wrote a middleware for Auth so no need to worry
+	// This page will be avalible only for Logged in users
 
 	plans, err := app.Models.Plan.GetAll()
 	if err != nil {
 		app.Session.Put(r.Context(), "error", "Unable to find the plans")
-		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		http.Redirect(w, r, "/", http.StatusSeeOther)
 		app.ErrorLog.Println(err)
 		return
 	}
@@ -198,4 +198,126 @@ func (app *Config) ChooseSubscription(w http.ResponseWriter, r *http.Request) {
 	app.render(w, r, "plans.page.gohtml", &TemplateData{
 		Data: dataMap,
 	})
+}
+
+func (app *Config) SubscribeToPlan(w http.ResponseWriter, r *http.Request) {
+
+	// get the id of the plan which user chose
+	id := r.URL.Query().Get("id")
+
+	// Covert string to int
+	planID, _ := strconv.Atoi(id)
+
+	// Get the plans from the DB
+	plan, err := app.Models.Plan.GetOne(planID)
+	if err != nil {
+		app.Session.Put(r.Context(), "error", "Unable to find the plan")
+		http.Redirect(w, r, "/members/plans", http.StatusSeeOther)
+		app.ErrorLog.Println(err)
+		return
+	}
+
+	// get the user from the session
+	user, ok := app.Session.Get(r.Context(), "user").(data.User)
+	if !ok {
+		app.Session.Put(r.Context(), "error", "Login in First.")
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		app.ErrorLog.Println(err)
+		return
+	}
+
+	// Will generate a invoice and send to the user via mail
+	app.WaitGroup.Add(1)
+	go func() {
+		defer app.WaitGroup.Done()
+
+		invoice, err := app.GetInvoice(user, plan)
+		if err != nil {
+			app.ErrorChan <- err
+		}
+
+		msg := Message{
+			To:       user.Email,
+			Subject:  "Your Invoice Mail",
+			Data:     invoice,
+			Template: "invoice",
+		}
+
+		app.sendEmail(msg)
+	}()
+
+	// Will generate a manual
+	app.WaitGroup.Add(1)
+	go func() {
+		defer app.WaitGroup.Done()
+
+		pdf := app.GenerateManual(user, plan)
+		err := pdf.OutputFileAndClose(fmt.Sprintf("./tmp/%d_manual.pdf", user.ID))
+		if err != nil {
+			app.ErrorChan <- err
+			return
+		}
+
+		msg := Message{
+			To:       user.Email,
+			Subject:  "Your Manual",
+			Data:     "Your user manual is atached",
+			Template: "invoice",
+			AttachmentMap: map[string]string{
+				"Manual.pdf": fmt.Sprintf("./tmp/%d_manual.pdf", user.ID),
+			},
+		}
+
+		app.sendEmail(msg)
+	}()
+
+	// Subscribe the user to a new plan
+	err = app.Models.Plan.SubscribeUserToPlan(user, *plan)
+	if err != nil {
+		app.Session.Put(r.Context(), "error", "Error while subscribing the plans")
+		http.Redirect(w, r, "/members/plans", http.StatusSeeOther)
+		app.ErrorLog.Println(err)
+	}
+
+	u, err := app.Models.User.GetOne(user.ID)
+	if err != nil {
+		app.Session.Put(r.Context(), "error", "Error while getting user from the database")
+		http.Redirect(w, r, "/members/plans", http.StatusSeeOther)
+		app.ErrorLog.Println(err)
+	}
+
+	app.Session.Put(r.Context(), "user", u )
+
+	//redirect now
+	app.Session.Put(r.Context(), "flash", "Subscribed")
+	http.Redirect(w, r, "/members/plans", http.StatusSeeOther)
+}
+
+func (app *Config) GetInvoice(user data.User, plan *data.Plan) (string, error) {
+	app.InfoLog.Println("Ammount is", plan.PlanAmountFormatted)
+	return plan.PlanAmountFormatted, nil
+}
+
+func (app *Config) GenerateManual(user data.User, plan *data.Plan) *gofpdf.Fpdf {
+
+	pdf := gofpdf.New("P", "mm", "Letter", "")
+	pdf.SetMargins(10, 13, 10)
+
+	importer := gofpdi.NewImporter()
+
+	time.Sleep(6 * time.Second)
+
+	t := importer.ImportPage(pdf, "./pdf/manual.pdf", 1, "/MediaBox")
+	pdf.AddPage()
+
+	importer.UseImportedTemplate(pdf, t, 0, 0, 215.9, 0)
+
+	pdf.SetX(75)
+	pdf.SetY(150)
+	pdf.SetFont("Arial", "", 12)
+	pdf.MultiCell(0, 4, fmt.Sprintf("%s %s", user.FirstName, user.LastName), "", "C", false)
+	pdf.Ln(5)
+	pdf.MultiCell(0, 4, fmt.Sprintf("%s User Guide", plan.PlanName), "", "C", false)
+
+	return pdf
 }
