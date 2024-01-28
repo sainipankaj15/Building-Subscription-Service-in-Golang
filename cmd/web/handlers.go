@@ -171,7 +171,7 @@ func (app *Config) ActivateAccount(w http.ResponseWriter, r *http.Request) {
 	user.Active = 1
 
 	// Updating the user in database as well
-	err = user.Update()
+	err = app.Models.User.Update(*user)
 	if err != nil {
 		app.Session.Put(r.Context(), "error", "Unable to update the user")
 		http.Redirect(w, r, "/", http.StatusSeeOther)
