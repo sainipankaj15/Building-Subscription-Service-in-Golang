@@ -85,3 +85,11 @@ You can manage the application using the following Makefile commands:
 - **To stop the application**: Execute the command `make stop`.
 
 - **To restart the application**: Execute the command `make restart`.
+
+## Accessing the Application
+
+To access the application, please navigate to the following URL in your web browser:
+
+[http://localhost:8080/](http://localhost:8080/)
+
+This address points to the local server where the application is currently running. Simply paste the URL into your browser's address bar and press Enter to access the application's interface.
