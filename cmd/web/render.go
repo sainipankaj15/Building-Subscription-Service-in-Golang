@@ -78,7 +78,7 @@ func (app *Config) AddDefaultData(td *TemplateData, r *http.Request) *TemplateDa
 
 		if !ok {
 			app.ErrorLog.Println("Can not get user from session")
-		}else{
+		} else {
 			td.User = &user
 		}
 

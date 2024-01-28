@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/bwmarrin/go-alone"
 	"strings"
 	"time"
+
+	goalone "github.com/bwmarrin/go-alone"
 )
 
 // my Key : Should not store in code but I am storing as it is just side Project

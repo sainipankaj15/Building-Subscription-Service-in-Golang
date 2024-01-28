@@ -39,7 +39,6 @@ type Message struct {
 }
 
 // A function who is listener on the MailerChan
-
 func (app *Config) listenForMail() {
 
 	for {

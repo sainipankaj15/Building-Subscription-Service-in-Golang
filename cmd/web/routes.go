@@ -37,11 +37,10 @@ func (app *Config) authRouter() http.Handler {
 
 	// set up Middleware
 	mux.Use(app.Auth)
- 
+
 	// define applicaiton routes
 	mux.Get("/plans", app.ChooseSubscription)
 	mux.Get("/subscribe", app.SubscribeToPlan)
 
 	return mux
 }
-

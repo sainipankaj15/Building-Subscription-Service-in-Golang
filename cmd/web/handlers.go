@@ -286,7 +286,7 @@ func (app *Config) SubscribeToPlan(w http.ResponseWriter, r *http.Request) {
 		app.ErrorLog.Println(err)
 	}
 
-	app.Session.Put(r.Context(), "user", u )
+	app.Session.Put(r.Context(), "user", u)
 
 	//redirect now
 	app.Session.Put(r.Context(), "flash", "Subscribed")
