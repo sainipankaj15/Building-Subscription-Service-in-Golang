@@ -12,6 +12,9 @@ import (
 	"github.com/phpdave11/gofpdf/contrib/gofpdi"
 )
 
+var pathToManual = "./pdf"
+var tmpPath = "./tmp"
+
 func (app *Config) HomePage(w http.ResponseWriter, r *http.Request) {
 	app.render(w, r, "home.page.gohtml", nil)
 }
@@ -43,7 +46,7 @@ func (app *Config) PostLoginPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// if code is there it means user is in our database : Now will verify for password
-	validPassword, err := user.PasswordMatches(password)
+	validPassword, err := app.Models.User.PasswordMatches(password)
 	if err != nil {
 		app.Session.Put(r.Context(), "error", "Invalid Credentials")
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
@@ -106,7 +109,7 @@ func (app *Config) PostRegisterPage(w http.ResponseWriter, r *http.Request) {
 		IsAdmin:   0,
 	}
 
-	_, err = user.Insert(user)
+	_, err = app.Models.User.Insert(user)
 
 	if err != nil {
 		app.Session.Put(r.Context(), "error", "Unable to create this user")
@@ -168,7 +171,7 @@ func (app *Config) ActivateAccount(w http.ResponseWriter, r *http.Request) {
 	user.Active = 1
 
 	// Updating the user in database as well
-	err = user.Update()
+	err = app.Models.User.Update(*user)
 	if err != nil {
 		app.Session.Put(r.Context(), "error", "Unable to update the user")
 		http.Redirect(w, r, "/", http.StatusSeeOther)
@@ -252,7 +255,7 @@ func (app *Config) SubscribeToPlan(w http.ResponseWriter, r *http.Request) {
 		defer app.WaitGroup.Done()
 
 		pdf := app.GenerateManual(user, plan)
-		err := pdf.OutputFileAndClose(fmt.Sprintf("./tmp/%d_manual.pdf", user.ID))
+		err := pdf.OutputFileAndClose(fmt.Sprintf("%s/%d_manual.pdf", tmpPath, user.ID))
 		if err != nil {
 			app.ErrorChan <- err
 			return
@@ -264,7 +267,7 @@ func (app *Config) SubscribeToPlan(w http.ResponseWriter, r *http.Request) {
 			Data:     "Your user manual is atached",
 			Template: "invoice",
 			AttachmentMap: map[string]string{
-				"Manual.pdf": fmt.Sprintf("./tmp/%d_manual.pdf", user.ID),
+				"Manual.pdf": fmt.Sprintf("%s/%d_manual.pdf", tmpPath, user.ID),
 			},
 		}
 
@@ -307,7 +310,7 @@ func (app *Config) GenerateManual(user data.User, plan *data.Plan) *gofpdf.Fpdf 
 
 	time.Sleep(6 * time.Second)
 
-	t := importer.ImportPage(pdf, "./pdf/manual.pdf", 1, "/MediaBox")
+	t := importer.ImportPage(pdf, fmt.Sprintf("%s/manual.pdf", pathToManual), 1, "/MediaBox")
 	pdf.AddPage()
 
 	importer.UseImportedTemplate(pdf, t, 0, 0, 215.9, 0)
