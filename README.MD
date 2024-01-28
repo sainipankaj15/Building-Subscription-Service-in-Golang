@@ -93,3 +93,6 @@ To access the application, please navigate to the following URL in your web brow
 [http://localhost:8080/](http://localhost:8080/)
 
 This address points to the local server where the application is currently running. Simply paste the URL into your browser's address bar and press Enter to access the application's interface.
+
+### Testing of this Application 
+- Check out the testing branch of this repository for comprehensive test cases and results for each function.
